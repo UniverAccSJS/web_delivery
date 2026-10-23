@@ -686,6 +686,58 @@ class OrderDetailsView(APIView):
 
 
 # 19. ФОрмирование чека и загрузка
+# class DownloadReceiptView(APIView):
+#     def get(self, request, order_id):
+#         try:
+#             order = Order.objects.select_related('address').get(id=order_id)
+#             order_items = OrderItem.objects.filter(order=order).select_related('item')
+            
+#             response = HttpResponse(content_type='application/pdf')
+#             response['Content-Disposition'] = f'attachment; filename="receipt_order_{order_id}.pdf"'
+            
+#             try:
+#                 pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+#                 font_name = 'Arial'
+#             except Exception:
+#                 font_name = 'Helvetica'
+
+#             p = canvas.Canvas(response)
+#             p.setFont(font_name, 14)
+            
+#             p.drawString(100, 800, f"========================================")
+#             p.drawString(100, 780, f"       ЧЕК ПО ЗАКАЗУ №{order.id}")
+#             p.drawString(100, 760, f"========================================")
+#             p.drawString(100, 730, f"Дата создания: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+#             p.drawString(100, 710, f"Адрес доставки: {order.address.full_address if order.address else 'Не указан'}")
+#             p.drawString(100, 690, f"Способ оплаты: {'Карта' if order.payment_method == 'CARD' else 'Наличные'}")
+#             p.drawString(100, 660, f"----------------------------------------")
+#             p.drawString(100, 640, f"Состав заказа:")
+            
+#             current_y = 610
+#             for op in order_items:
+#                 subtotal = op.quantity * float(op.price_at_purchase)
+#                 p.drawString(100, current_y, f" • {op.item.item_name} x {op.quantity} шт. = {subtotal} руб.")
+#                 current_y -= 20
+                
+#             p.drawString(100, current_y - 10, f"----------------------------------------")
+#             if float(order.bonus_applied) > 0:
+#                 p.drawString(100, current_y - 30, f"Списано бонусов: -{order.bonus_applied} руб.")
+#                 current_y -= 20
+                
+#             p.drawString(100, current_y - 40, f"ИТОГО К ОПЛАТЕ: {order.total_amount} руб.")
+#             p.drawString(100, current_y - 60, f"========================================")
+#             p.drawString(100, current_y - 80, f"   Приятного аппетита!")
+            
+#             p.showPage()
+#             p.save()
+#             return response
+            
+#         except Order.DoesNotExist:
+#             return HttpResponse("Заказ не найден", status=404)
+#         except Exception as e:
+#             return HttpResponse(f"Ошибка генерации PDF чека: {str(e)}", status=400)
+
+# 19. ФОрмирование чека и загрузка
 class DownloadReceiptView(APIView):
     def get(self, request, order_id):
         try:
@@ -695,19 +747,35 @@ class DownloadReceiptView(APIView):
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="receipt_order_{order_id}.pdf"'
             
+            # Динамически подбираем кириллический шрифт в зависимости от ОС (Windows/Linux)
+            font_name = 'DejaVu'
             try:
-                pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-                font_name = 'Arial'
+                # 1. Сначала пробуем встроенный шрифт Linux (для серверов Render)
+                linux_font = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+                if os.path.exists(linux_font):
+                    pdfmetrics.registerFont(TTFont('DejaVu', linux_font))
+                else:
+                    # 2. Если мы на локальной Windows, регистрируем стандартный Arial
+                    windows_font = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arial.ttf')
+                    if os.path.exists(windows_font):
+                        pdfmetrics.registerFont(TTFont('DejaVu', windows_font))
+                    else:
+                        # 3. Резервный вариант: если шрифты не найдены, кастомное имя
+                        font_name = 'Helvetica'
             except Exception:
                 font_name = 'Helvetica'
 
             p = canvas.Canvas(response)
+            # Применяем подобранный шрифт
             p.setFont(font_name, 14)
             
             p.drawString(100, 800, f"========================================")
             p.drawString(100, 780, f"       ЧЕК ПО ЗАКАЗУ №{order.id}")
             p.drawString(100, 760, f"========================================")
-            p.drawString(100, 730, f"Дата создания: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Локализация даты создания в удобочитаемый вид
+            created_local = timezone.localtime(order.created_at)
+            p.drawString(100, 730, f"Дата создания: {created_local.strftime('%Y-%m-%d %H:%M:%S')}")
             p.drawString(100, 710, f"Адрес доставки: {order.address.full_address if order.address else 'Не указан'}")
             p.drawString(100, 690, f"Способ оплаты: {'Карта' if order.payment_method == 'CARD' else 'Наличные'}")
             p.drawString(100, 660, f"----------------------------------------")
@@ -736,6 +804,8 @@ class DownloadReceiptView(APIView):
             return HttpResponse("Заказ не найден", status=404)
         except Exception as e:
             return HttpResponse(f"Ошибка генерации PDF чека: {str(e)}", status=400)
+
+
 
 
 # 20. Обновление баланаса после получения статуса заказа "DELIVERED"/"Доставлен" взамен функции из СУБД
