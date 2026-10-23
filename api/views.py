@@ -485,13 +485,14 @@ class CreateOrderView(APIView):
                 )['total'] or 0
                 
                 district = District.objects.get(id=district_id)
-                delivery_price = district.delivery_price
+                # delivery_price = district.delivery_price
                 
                 user = User.objects.select_for_update().get(id=client_id)
                 if bonuses_to_spend > float(user.bonus_balance):
                     return Response({"success": False, "error": "Недостаточно бонусов"}, status=status.HTTP_400_BAD_REQUEST)
                 
-                total_amount = float(total_items_amount) + float(delivery_price) #- bonuses_to_spend
+                total_amount = float(total_items_amount) + float(delivery_price) # - bonuses_to_spend
+                total_amount_after_bonuses = total_amount - bonuses_to_spend
                 bonus_earned = total_amount * 0.05  # Начисление 5% бонусов
                 
                 user.bonus_balance = float(user.bonus_balance) - bonuses_to_spend # + bonus_earned
@@ -509,7 +510,7 @@ class CreateOrderView(APIView):
                     predicted_delivery_time=timezone.now() + timezone.timedelta(minutes=45),
                     bonus_applied=bonuses_to_spend,
                     bonus_earned=bonus_earned,
-                    amount_paid_cash_card=total_amount,
+                    amount_paid_cash_card=total_amount_after_bonuses,
                     card_id=int(card_id) if card_id else None
                 )
 
