@@ -776,8 +776,9 @@ class DownloadReceiptView(APIView):
             p.drawString(100, 760, f"========================================")
             
             # Локализация даты создания в удобочитаемый вид
-            created_local = timezone.localtime(order.created_at)
-            p.drawString(100, 730, f"Дата создания: {created_local.strftime('%Y-%m-%d %H:%M:%S')}")
+            # created_local = timezone.localtime(order.created_at)
+            # p.drawString(100, 730, f"Дата создания: {created_local.strftime('%Y-%m-%d %H:%M:%S')}")
+            p.drawString(100, 730, f"Дата создания: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
             p.drawString(100, 710, f"Адрес доставки: {order.address.full_address if order.address else 'Не указан'}")
             p.drawString(100, 690, f"Способ оплаты: {'Карта' if order.payment_method == 'CARD' else 'Наличные'}")
             p.drawString(100, 660, f"----------------------------------------")
