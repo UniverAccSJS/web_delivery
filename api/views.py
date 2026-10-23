@@ -757,15 +757,15 @@ class DownloadReceiptView(APIView):
             pdfmetrics.registerFont(TTFont('DejaVu', font_path))
             font_name = 'DejaVu'
 
-            p = canvas.Canvas(response)
-            p.setFont(font_name, 14)
+            # p = canvas.Canvas(response)
+            # p.setFont(font_name, 14)
 
             p = canvas.Canvas(response)
             # Применяем подобранный шрифт
             p.setFont(font_name, 14)
             
-            p.drawString(100, 800, f"========================================")
-            p.drawString(100, 780, f"       ЧЕК ПО ЗАКАЗУ №{order.id}")
+            p.drawString(100, 810, f"========================================")
+            p.drawString(100, 800, f"       ЧЕК ПО ЗАКАЗУ №{order.id}")
             p.drawString(100, 780, f"       загружено с бэка на Render")
             p.drawString(100, 760, f"========================================")
             
