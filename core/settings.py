@@ -74,11 +74,7 @@
 
 # НАСТРОЙКА КОРС-РАЗРЕШЕНИЙ:
 # Указываем конкретный адрес вашего фронтенда (обязательно БЕЗ слэша на конце!)
-CORS_ALLOWED_ORIGINS = [
-    "https://univeraccsjs.github.io/web_delivery_frontend/",  # Замените на точный адрес вашей страницы GitHub Pages
-]
 
-CORS_ALLOW_CREDENTIALS = True
 
 
 # # Password validation
@@ -214,7 +210,13 @@ else:
 
 # НАСТРОЙКА КОРС-РАЗРЕШЕНИЙ:
 # Для безопасности в продакшене лучше указать конкретный адрес GitHub Pages вместо True
-CORS_ALLOW_ALL_ORIGINS = True  
+# CORS_ALLOW_ALL_ORIGINS = True  
+# CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://univeraccsjs.github.io/web_delivery_frontend/",  # Замените на точный адрес вашей страницы GitHub Pages
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # Password validation
