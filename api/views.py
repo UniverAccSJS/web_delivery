@@ -480,22 +480,65 @@ class CreateOrderView(APIView):
                 if not cart_items.exists():
                     return Response({"success": False, "error": "Корзина пуста"}, status=status.HTTP_400_BAD_REQUEST)
                 
-                total_items_amount = cart_items.aggregate(
+                # total_items_amount = cart_items.aggregate(
+                #     total=Sum(F('quantity') * F('item__price'))
+                # )['total'] or 0
+                
+                # district = District.objects.get(id=district_id)
+                # # delivery_price = district.delivery_price
+                
+                # user = User.objects.select_for_update().get(id=client_id)
+                # if bonuses_to_spend > float(user.bonus_balance):
+                #     return Response({"success": False, "error": "Недостаточно бонусов"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # total_amount = float(total_items_amount) + float(delivery_price) # - bonuses_to_spend
+                # total_amount_after_bonuses = total_amount - bonuses_to_spend
+                # bonus_earned = total_amount * 0.05  # Начисление 5% бонусов
+                
+                # user.bonus_balance = float(user.bonus_balance) - bonuses_to_spend # + bonus_earned
+                # user.save()
+
+                # # Запись заказа
+                # order = Order.objects.create(
+                #     client_id=client_id,
+                #     address_id=address_id,
+                #     district_id=district_id,
+                #     total_amount=total_amount,
+                #     payment_method=payment_method,
+                #     order_status='CREATED', # 'CREATED', 'ACCEPTED', 'COOKING', 'DELIVERING', 'DELIVERED', 'CANCELLED'
+                #     created_at=timezone.now(),
+                #     predicted_delivery_time=timezone.now() + timezone.timedelta(minutes=45),
+                #     bonus_applied=bonuses_to_spend,
+                #     bonus_earned=bonus_earned,
+                #     amount_paid_cash_card=total_amount_after_bonuses,
+                #     card_id=int(card_id) if card_id else None
+                # )
+
+                                total_items_amount = cart_items.aggregate(
                     total=Sum(F('quantity') * F('item__price'))
                 )['total'] or 0
                 
+                # 1. ОБЯЗАТЕЛЬНО получаем реальную стоимость доставки из района
                 district = District.objects.get(id=district_id)
-                # delivery_price = district.delivery_price
+                delivery_price = float(district.delivery_price) if hasattr(district, 'delivery_price') else 0.0
+                
+                # 2. Высчитываем полную "грязную" стоимость (блюда + доставка)
+                total_amount = float(total_items_amount) + delivery_price
                 
                 user = User.objects.select_for_update().get(id=client_id)
                 if bonuses_to_spend > float(user.bonus_balance):
                     return Response({"success": False, "error": "Недостаточно бонусов"}, status=status.HTTP_400_BAD_REQUEST)
                 
-                total_amount = float(total_items_amount) + float(delivery_price) # - bonuses_to_spend
+                # 3. Сумма к оплате деньгами — это строгая разница между полной суммой и бонусами
                 total_amount_after_bonuses = total_amount - bonuses_to_spend
+                
+                # Защита: сумма к оплате деньгами не может стать отрицательной
+                if total_amount_after_bonuses < 0:
+                    total_amount_after_bonuses = 0.0
+                
                 bonus_earned = total_amount * 0.05  # Начисление 5% бонусов
                 
-                user.bonus_balance = float(user.bonus_balance) - bonuses_to_spend # + bonus_earned
+                user.bonus_balance = float(user.bonus_balance) - bonuses_to_spend
                 user.save()
 
                 # Запись заказа
@@ -503,16 +546,19 @@ class CreateOrderView(APIView):
                     client_id=client_id,
                     address_id=address_id,
                     district_id=district_id,
-                    total_amount=total_amount,
+                    # Теперь эти три поля гарантированно сойдутся в формуле: total_amount = amount_paid + bonus_applied
+                    total_amount=total_amount,                          # Полная сумма (например, 840.00)
+                    amount_paid_cash_card=total_amount_after_bonuses,   # Деньгами (например, 830.00)
+                    bonus_applied=bonuses_to_spend,                     # Бонусами (например, 10.00)
+                    
                     payment_method=payment_method,
-                    order_status='CREATED', # 'CREATED', 'ACCEPTED', 'COOKING', 'DELIVERING', 'DELIVERED', 'CANCELLED'
+                    order_status='CREATED',
                     created_at=timezone.now(),
                     predicted_delivery_time=timezone.now() + timezone.timedelta(minutes=45),
-                    bonus_applied=bonuses_to_spend,
                     bonus_earned=bonus_earned,
-                    amount_paid_cash_card=total_amount_after_bonuses,
                     card_id=int(card_id) if card_id else None
                 )
+
 
                 # Перенос из корзины в позиции заказа
                 order_items_to_create = [
