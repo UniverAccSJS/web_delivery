@@ -216,7 +216,8 @@ else:
 
 CORS_ALLOWED_ORIGINS = [
     # Продакшен: чистый домен GitHub Pages (ОБЯЗАТЕЛЬНО без путей и слэшей на конце)
-    "https://github.io",  
+    # "https://github.io",  
+    "https://univeraccsjs.github.io",
     
     # Локальная разработка: ваш Vite-сервер фронтенда
     "http://localhost:5173",           
