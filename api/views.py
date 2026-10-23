@@ -750,22 +750,25 @@ class DownloadReceiptView(APIView):
             # Динамически подбираем кириллический шрифт в зависимости от ОС (Windows/Linux)
             font_name = 'DejaVu'
           # Ищем шрифт прямо внутри папки вашего приложения api
-           # font_name = 'Helvetica'
+            # Автоматический подбор шрифта прямо из папки вашего приложения api
+            font_name = 'Helvetica'
             try:
-                # ИСПРАВЛЕНО: путь ведет напрямую в папку api к файлу DejaVuSans.ttf
+                # Находим точный путь к файлу, который вы закинули в api
                 font_path = os.path.join(settings.BASE_DIR, 'api', 'DejaVuSans.ttf')
                 
                 if os.path.exists(font_path):
                     pdfmetrics.registerFont(TTFont('DejaVu', font_path))
                     font_name = 'DejaVu'
                 else:
-                    # Резервный вариант для локальной Windows (ищет системный Arial)
+                    # Локальный вариант для вашей Windows
                     pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
                     font_name = 'Arial'
             except Exception as e:
-                print(f"🚨 Ошибка при регистрации шрифта: {str(e)}")
-                font_name = 'Helvetica' # Fallback, чтобы код точно не завис
+                print(f"🚨 Ошибка шрифтов: {str(e)}")
+                font_name = 'Helvetica'
 
+            p = canvas.Canvas(response)
+            p.setFont(font_name, 14)
 
             p = canvas.Canvas(response)
             # Применяем подобранный шрифт
