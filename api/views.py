@@ -491,7 +491,7 @@ class CreateOrderView(APIView):
                 if bonuses_to_spend > float(user.bonus_balance):
                     return Response({"success": False, "error": "Недостаточно бонусов"}, status=status.HTTP_400_BAD_REQUEST)
                 
-                total_amount = float(total_items_amount) + float(delivery_price) - bonuses_to_spend
+                total_amount = float(total_items_amount) + float(delivery_price) #- bonuses_to_spend
                 bonus_earned = total_amount * 0.05  # Начисление 5% бонусов
                 
                 user.bonus_balance = float(user.bonus_balance) - bonuses_to_spend # + bonus_earned
