@@ -72,11 +72,6 @@
 # CORS_ALLOW_ALL_ORIGINS = True  
 # CORS_ALLOW_CREDENTIALS = True
 
-# НАСТРОЙКА КОРС-РАЗРЕШЕНИЙ:
-# Указываем конкретный адрес вашего фронтенда (обязательно БЕЗ слэша на конце!)
-
-
-
 # # Password validation
 # AUTH_PASSWORD_VALIDATORS = [
 #     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -195,7 +190,6 @@ if os.environ.get('DATABASE_URL'):
         )
     }
 else:
-    # ТВОЯ ЛОКАЛЬНАЯ БАЗА ДАННЫХ POSTGRESQL (для разработки)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -213,9 +207,22 @@ else:
 # CORS_ALLOW_ALL_ORIGINS = True  
 # CORS_ALLOW_CREDENTIALS = True
 
+
+
+# CORS_ALLOWED_ORIGINS = [
+#     //"https://univeraccsjs.github.io/web_delivery_frontend/",
+# ]
+
+
 CORS_ALLOWED_ORIGINS = [
-    "https://univeraccsjs.github.io/web_delivery_frontend/",  # Замените на точный адрес вашей страницы GitHub Pages
+    # Продакшен: чистый домен GitHub Pages (ОБЯЗАТЕЛЬНО без путей и слэшей на конце)
+    "https://github.io",  
+    
+    # Локальная разработка: ваш Vite-сервер фронтенда
+    "http://localhost:5173",           
+    "http://127.0.0.1:5173",           
 ]
+
 
 CORS_ALLOW_CREDENTIALS = True
 
